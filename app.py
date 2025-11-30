@@ -24,8 +24,8 @@ class App:
 
     Attributes:
         _is_running (bool): Flag indicating if the bot is currently active.
-        _pair (str): The trading pair symbol (e.g., 'BTCUSDT').
-        _capital (float): The initial capital allocated for trading in USDT.
+        _pair (str): The trading pair symbol (e.g., 'BTCUSDT'). TODO : use more than one??,
+        _capital (float): The initial capital allocated for trading in USDT. TODO : maybe put it into the portfiolio class?
         _binance_client (BinanceClient): Client for Binance API communication.
         _portfolio (Portfolio): Portfolio manager for tracking balances and trades.
         _strategy (TradingStrategy): The trading strategy implementation.
@@ -203,7 +203,39 @@ class App:
             capital (float): Initial capital in USDT.
             strategy_params (dict): Strategy-specific parameters.
         """
-        pass
+        # Configure the Binance client with API credentials
+        self._binance_client = BinanceClient(
+            api_key=api_key, secret_key=secret, testnet=True  # Using testnet for safety
+        )
+
+        # Set trading pair and capital
+        self._pair = pair
+        self._capital = capital
+
+        # Initialize portfolio with the initial capital
+        self._portfolio = Portfolio(initial_capital=capital)
+
+        # Initialize the trading strategy (MovingAverageStrategy)
+        from moving_average_strategy import MovingAverageStrategy
+
+        short_window = strategy_params.get("short_window", 10)
+        long_window = strategy_params.get("long_window", 30)
+
+        self._strategy = MovingAverageStrategy(
+            short_window=short_window, long_window=long_window
+        )
+
+        # Configure data manager
+        json_filename = strategy_params.get("json_path", "trading_data.json")
+        self._data_manager.set_json_path(json_filename)
+
+        print(f"\n✓ Bot configuration completed successfully!")
+        print(f"  Trading Pair: {self._pair}")
+        print(f"  Initial Capital: ${self._capital:.2f} USDT")
+        print(
+            f"  Strategy: Moving Average (Short: {short_window}, Long: {long_window})"
+        )
+        print(f"  Mode: Testnet")
 
     def start_bot(self) -> None:
         """
@@ -246,3 +278,135 @@ class App:
         via console output or GUI.
         """
         pass
+
+    def collect_user_input(self) -> Dict[str, Any]:
+        """
+        Collect all necessary configuration data from the user.
+
+        Interactively prompts the user to enter API credentials, trading pair,
+        capital amount, strategy parameters, and data storage path. Validates
+        all inputs and returns them as a dictionary ready for configure_settings().
+
+        Returns:
+            dict: A dictionary containing:
+                - api_key (str): Binance API key
+                - secret (str): Binance secret key
+                - pair (str): Trading pair symbol
+                - capital (float): Initial capital in USDT
+                - strategy_params (dict): Strategy parameters
+        """
+        print("=" * 60)
+        print("          BINANCE TRADING BOT - CONFIGURATION")
+        print("=" * 60)
+
+        # [1/5] Collect API credentials
+        print("\n[1/5] API Configuration")
+        print("-" * 60)
+        api_key = input("Enter your Binance API Key: ").strip()
+        secret_key = input("Enter your Binance Secret Key: ").strip()
+
+        # [2/5] Collect trading pair
+        print("\n[2/5] Trading Pair Selection")
+        print("-" * 60)
+        trading_pair = input("Enter the trading pair (e.g., BTCUSDT): ").strip().upper()
+
+        # [3/5] Collect capital with validation
+        print("\n[3/5] Capital Configuration")
+        print("-" * 60)
+        while True:
+            try:
+                capital = float(
+                    input("Enter the initial capital in USDT (minimum $10): ")
+                )
+                if capital < 10:
+                    print("Error: Capital must be at least $10. Please try again.")
+                    continue
+                break
+            except ValueError:
+                print("Error: Please enter a valid number.")
+
+        # [4/5] Collect strategy parameters
+        print("\n[4/5] Strategy Parameters (Moving Average)")
+        print("-" * 60)
+        while True:
+            try:
+                short_window = int(
+                    input("Enter the short-term moving average period (default: 10): ")
+                    or "10"
+                )
+                if short_window <= 0:
+                    print("Error: Period must be a positive number.")
+                    continue
+                break
+            except ValueError:
+                print("Error: Please enter a valid integer.")
+
+        while True:
+            try:
+                long_window = int(
+                    input("Enter the long-term moving average period (default: 30): ")
+                    or "30"
+                )
+                if long_window <= 0 or long_window <= short_window:
+                    print(
+                        "Error: Long window must be positive and greater than short window."
+                    )
+                    continue
+                break
+            except ValueError:
+                print("Error: Please enter a valid integer.")
+
+        # [5/5] Collect data storage path
+        print("\n[5/5] Data Storage")
+        print("-" * 60)
+        json_path = (
+            input(
+                "Enter the JSON file path for trade history (default: trading_data.json): "
+            ).strip()
+            or "trading_data.json"
+        )
+
+        # Prepare strategy parameters dictionary
+        strategy_params = {
+            "short_window": short_window,
+            "long_window": long_window,
+            "json_path": json_path,
+        }
+
+        # Return all configuration data
+        return {
+            "api_key": api_key,
+            "secret": secret_key,
+            "pair": trading_pair,
+            "capital": capital,
+            "strategy_params": strategy_params,
+        }
+
+
+def main() -> None:
+    """Main entry point for the trading bot application."""
+    app = App()
+
+    # Collect user input through the dedicated method
+    config_data = app.collect_user_input()
+
+    # Configure the bot with the collected data
+    print("\n" + "=" * 60)
+    app.configure_settings(
+        api_key=config_data["api_key"],
+        secret=config_data["secret"],
+        pair=config_data["pair"],
+        capital=config_data["capital"],
+        strategy_params=config_data["strategy_params"],
+    )
+    print("=" * 60)
+
+    # Display menu for next actions
+    print("\nBot configuration complete. You can now:")
+    print("  • Call app.start_bot() to begin trading")
+    print("  • Call app.display_status() to view current status")
+    print("  • Call app.stop_bot() to stop the trading bot")
+
+
+if __name__ == "__main__":
+    main()
