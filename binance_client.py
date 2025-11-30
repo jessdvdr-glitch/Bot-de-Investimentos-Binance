@@ -6,6 +6,9 @@ from the Binance exchange, supporting both testnet and live trading environments
 """
 
 from typing import Optional
+import requests
+import pandas as pd
+from datetime import datetime
 
 
 class BinanceClient:
@@ -110,7 +113,43 @@ class BinanceClient:
         Returns:
             DataFrame: A pandas DataFrame containing historical price data.
         """
-        pass
+        base = (
+            "https://testnet.binance.vision"
+            if self._testnet
+            else "https://api.binance.com"
+        )
+        url = f"{base}/api/v3/klines"
+        params = {"symbol": symbol, "interval": interval, "limit": 1000}
+        try:
+            resp = requests.get(url, params=params, timeout=10)
+            resp.raise_for_status()
+            klines = resp.json()
+
+            # Parse into a DataFrame
+            cols = [
+                "open_time",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "close_time",
+                "quote_asset_volume",
+                "num_trades",
+                "taker_buy_base_asset_volume",
+                "taker_buy_quote_asset_volume",
+                "ignore",
+            ]
+            df = pd.DataFrame(klines, columns=cols)
+            # convert numeric columns
+            for c in ["open", "high", "low", "close", "volume"]:
+                df[c] = pd.to_numeric(df[c], errors="coerce")
+            # convert timestamps
+            df["open_time"] = pd.to_datetime(df["open_time"], unit="ms")
+            df["close_time"] = pd.to_datetime(df["close_time"], unit="ms")
+            return df
+        except Exception:
+            return None
 
     def get_current_price(self, symbol: str) -> float:
         """
@@ -125,4 +164,54 @@ class BinanceClient:
         Returns:
             float: The current price of the symbol.
         """
-        pass
+        base = (
+            "https://testnet.binance.vision"
+            if self._testnet
+            else "https://api.binance.com"
+        )
+        url = f"{base}/api/v3/ticker/price"
+        params = {"symbol": symbol}
+        try:
+            resp = requests.get(url, params=params, timeout=5)
+            resp.raise_for_status()
+            data = resp.json()
+            price = float(data.get("price", 0.0))
+            return price
+        except Exception:
+            return 0.0
+
+    def create_test_order(
+        self, symbol: str, side: str, quantity: float, price: float = None
+    ) -> dict:
+        """
+        Create a simulated test order (does not execute real trades).
+
+        Args:
+            symbol (str): Trading pair symbol
+            side (str): 'BUY' or 'SELL'
+            quantity (float): Quantity to buy/sell
+            price (float): Price to execute at (if None, current price is used)
+
+        Returns:
+            dict: Simulated order details
+        """
+        side = side.upper()
+        exec_price = price if price is not None else self.get_current_price(symbol)
+        timestamp = datetime.utcnow().isoformat() + "Z"
+        order = {
+            "symbol": symbol,
+            "side": side,
+            "price": exec_price,
+            "quantity": quantity,
+            "timestamp": timestamp,
+            "status": "FILLED",
+        }
+        return order
+
+    def test_buy(self, symbol: str, quantity: float, price: float = None) -> dict:
+        """Simulate a buy order."""
+        return self.create_test_order(symbol, "BUY", quantity, price)
+
+    def test_sell(self, symbol: str, quantity: float, price: float = None) -> dict:
+        """Simulate a sell order."""
+        return self.create_test_order(symbol, "SELL", quantity, price)
