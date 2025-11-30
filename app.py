@@ -679,8 +679,8 @@ class App:
             except ValueError:
                 print("Error: Please enter a valid integer.")
 
-        # Data storage: use a relative default file name `json.data` in current directory
-        json_path = "json.data"
+        # Data storage: use a relative default file name `trades.json` in current directory
+        json_path = "trades.json"
 
         # Prepare strategy parameters dictionary
         strategy_params = {
