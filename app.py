@@ -39,7 +39,7 @@ class LiveWindow:
         client: BinanceClient,
         pair: str,
         portfolio: Optional[Portfolio] = None,
-        update_interval: int = 30,
+        update_interval: int = 1,
     ):
         self.client = client
         self.pair = pair
@@ -464,7 +464,7 @@ class App:
         if tk is not None:
             try:
                 self._live_window = LiveWindow(
-                    self._binance_client, self._pair, self._portfolio
+                    self._binance_client, self._pair, self._portfolio, update_interval=1
                 )
                 self._live_window.start()
             except Exception as e:
