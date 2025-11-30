@@ -1,3 +1,5 @@
+"""Portfolio Management Module  """
+
 import json
 import csv
 from typing import Dict, Any

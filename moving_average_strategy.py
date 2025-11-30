@@ -1,3 +1,6 @@
+"""Moving Average Crossover Trading Strategy Module"""
+
+
 import pandas as pd
 from typing import Any
 from trading_strategy import TradingStrategy

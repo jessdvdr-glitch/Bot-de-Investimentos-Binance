@@ -1,3 +1,5 @@
+"""Trading Strategy Abstract Base Class Module"""
+
 from abc import ABC, abstractmethod
 import pandas as pd
 from typing import Any
