@@ -6,6 +6,8 @@ tracking balances and managing buy/sell operations.
 """
 
 from typing import List, Dict, Any
+import json
+from datetime import datetime
 
 
 class Portfolio:
@@ -105,7 +107,34 @@ class Portfolio:
             quantity (float): The quantity of cryptocurrency traded.
             side (str): The side of the trade - 'BUY' or 'SELL'.
         """
-        pass
+        side = side.upper()
+        timestamp = datetime.utcnow().isoformat() + "Z"
+        if side == "BUY":
+            cost = price * quantity
+            self._usdt_balance -= cost
+            self._crypto_balance += quantity
+            trade = {
+                "side": "BUY",
+                "price": price,
+                "quantity": quantity,
+                "cost": cost,
+                "timestamp": timestamp,
+            }
+            self._trade_history.append(trade)
+        elif side == "SELL":
+            proceeds = price * quantity
+            self._crypto_balance -= quantity
+            self._usdt_balance += proceeds
+            trade = {
+                "side": "SELL",
+                "price": price,
+                "quantity": quantity,
+                "proceeds": proceeds,
+                "timestamp": timestamp,
+            }
+            self._trade_history.append(trade)
+        else:
+            raise ValueError("side must be 'BUY' or 'SELL'")
 
     def execute_buy(self, price: float) -> float:
         """
@@ -119,7 +148,15 @@ class Portfolio:
         Returns:
             float: The quantity of cryptocurrency purchased.
         """
-        pass
+        if price <= 0:
+            return 0.0
+        if self._usdt_balance <= 0:
+            return 0.0
+
+        quantity = self._usdt_balance / price
+        # update balances and record trade
+        self.update_balance(price=price, quantity=quantity, side="BUY")
+        return quantity
 
     def execute_sell(self, price: float) -> float:
         """
@@ -134,7 +171,15 @@ class Portfolio:
         Returns:
             float: The amount of USDT received from the sale.
         """
-        pass
+        if price <= 0:
+            return 0.0
+        if self._crypto_balance <= 0:
+            return 0.0
+
+        quantity = self._crypto_balance
+        proceeds = quantity * price
+        self.update_balance(price=price, quantity=quantity, side="SELL")
+        return proceeds
 
     def get_total_value_usdt(self, current_price: float) -> float:
         """
@@ -150,7 +195,7 @@ class Portfolio:
         Returns:
             float: The total portfolio value in USDT.
         """
-        pass
+        return self._usdt_balance + (self._crypto_balance * current_price)
 
     def save_trades_to_file(self, filename: str) -> None:
         """
@@ -163,4 +208,8 @@ class Portfolio:
         Args:
             filename (str): The path and filename where trades will be saved.
         """
-        pass
+        try:
+            with open(filename, "w", encoding="utf-8") as f:
+                json.dump({"trades": self._trade_history}, f, indent=2)
+        except Exception:
+            raise
