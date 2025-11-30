@@ -1,108 +1,97 @@
-"""Portfolio Management Module  """
+""" Portfolio Management Module """
 
-import json
-import csv
 from typing import Dict, Any
 from datetime import datetime
-from decimal import Decimal
 
 
 class Portfolio:
     """
-    Simple simulated portfolio: tracks USDT balance and asset balance (e.g., BTC).
-    Trades are logged to trades.json and trades.csv.
+    Simulated portfolio for paper trading.
+    Tracks balances and delegates trade storage to DataManager.
     """
 
-    def __init__(self, initial_usdt: float, asset_symbol: str = "BTC"):
+    def __init__(self, initial_usdt: float, data_manager, asset_symbol: str = "BTC"):
+        """
+        Args:
+            initial_usdt (float): Starting capital
+            data_manager (DataManager): instance handling JSON file persistence
+            asset_symbol (str): Crypto asset being traded (e.g., BTC)
+        """
         self.usdt = float(initial_usdt)
         self.asset = 0.0
         self.asset_symbol = asset_symbol.upper()
         self.trades = []  # in-memory record
 
-        self.csv_file = "trades.csv"
-        self.json_file = "trades.json"
+        self.data_manager = data_manager  # dependency injection ✔
 
-        # ensure files exist with header if csv missing
-        try:
-            with open(self.csv_file, 'x', newline='') as f:
-                writer = csv.DictWriter(f, fieldnames=['timestamp','type','price','quantity','asset','usdt_after','asset_after'])
-                writer.writeheader()
-        except FileExistsError:
-            pass
+    # -----------------------------------------------------------
 
-        try:
-            with open(self.json_file, 'x') as f:
-                json.dump([], f)
-        except FileExistsError:
-            pass
+    def _create_trade_dict(self, trade_type: str, price: float, quantity: float) -> Dict[str, Any]:
+        """
+        Creates a standardized trade dictionary.
+        """
+        return {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "type": trade_type,
+            "price": price,
+            "quantity": quantity,
+            "asset": self.asset_symbol,
+            "usdt_after": self.usdt,
+            "asset_after": self.asset,
+        }
 
-    def _record_trade(self, t: Dict[str, Any]) -> None:
-        # append to CSV
-        with open(self.csv_file, 'a', newline='') as f:
-            writer = csv.DictWriter(f, fieldnames=['timestamp','type','price','quantity','asset','usdt_after','asset_after'])
-            writer.writerow({
-                'timestamp': t['timestamp'],
-                'type': t['type'],
-                'price': t['price'],
-                'quantity': t['quantity'],
-                'asset': self.asset_symbol,
-                'usdt_after': t['usdt_after'],
-                'asset_after': t['asset_after']
-            })
-        # append to JSON
-        with open(self.json_file, 'r+', encoding='utf-8') as f:
-            data = json.load(f)
-            data.append(t)
-            f.seek(0)
-            json.dump(data, f, indent=2)
-        self.trades.append(t)
+    def _record_trade(self, trade: Dict[str, Any]) -> None:
+        """
+        Saves a trade through DataManager + keeps a local copy.
+        """
+        self.trades.append(trade)
+        self.data_manager.append_trade(trade)
+
+    # -----------------------------------------------------------
 
     def buy_all_in(self, price: float) -> Dict[str, Any]:
         """
-        Use all USDT to buy asset at given price. Returns trade dict.
+        Use all USDT to buy crypto.
         """
         if self.usdt <= 0:
-            raise RuntimeError("No USDT to buy with")
+            raise RuntimeError("No USDT to buy with.")
+
         quantity = self.usdt / price
+
         # update balances
         self.asset += quantity
         self.usdt = 0.0
 
-        t = {
-            'timestamp': datetime.utcnow().isoformat() + 'Z',
-            'type': 'BUY',
-            'price': price,
-            'quantity': quantity,
-            'usdt_after': self.usdt,
-            'asset_after': self.asset
-        }
-        self._record_trade(t)
-        return t
+        trade = self._create_trade_dict("BUY", price, quantity)
+        self._record_trade(trade)
+
+        return trade
+
+    # -----------------------------------------------------------
 
     def sell_all(self, price: float) -> Dict[str, Any]:
         """
-        Sell all asset at given price, convert to USDT.
+        Sell all crypto holdings and convert to USDT.
         """
         if self.asset <= 0:
-            raise RuntimeError("No asset to sell")
+            raise RuntimeError("No asset to sell.")
+
         quantity = self.asset
         proceeds = quantity * price
-        self.usdt += proceeds
-        self.asset = 0.0
 
-        t = {
-            'timestamp': datetime.utcnow().isoformat() + 'Z',
-            'type': 'SELL',
-            'price': price,
-            'quantity': quantity,
-            'usdt_after': self.usdt,
-            'asset_after': self.asset
-        }
-        self._record_trade(t)
-        return t
+        # update balances
+        self.asset = 0.0
+        self.usdt += proceeds
+
+        trade = self._create_trade_dict("SELL", price, quantity)
+        self._record_trade(trade)
+
+        return trade
+
+    # -----------------------------------------------------------
 
     def portfolio_value(self, current_price: float) -> float:
         """
-        Return total portfolio value in USDT (usdt + asset*price).
+        Total paper trading value in USDT.
         """
         return self.usdt + self.asset * current_price
