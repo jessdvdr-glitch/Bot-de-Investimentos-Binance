@@ -188,6 +188,29 @@ class LiveWindow:
             except Exception:
                 pass
 
+    def add_signal(self, signal_msg: str) -> None:
+        """
+        Add a signal message to the signals display box.
+
+        Args:
+            signal_msg (str): The signal message to display.
+        """
+        try:
+            if hasattr(self, "_signal_box") and self._signal_box:
+                self._signal_box.config(state="normal")
+                # Add timestamp and signal message
+                ts = datetime.now().strftime("%H:%M:%S")
+                line = f"[{ts}] {signal_msg}\n"
+                self._signal_box.insert("end", line)
+                # Keep only last 100 lines
+                lines = int(self._signal_box.index("end-1c").split(".")[0])
+                if lines > 100:
+                    self._signal_box.delete("1.0", "2.0")
+                self._signal_box.see("end")
+                self._signal_box.config(state="disabled")
+        except Exception:
+            pass
+
     def stop(self) -> None:
         self._stop_event.set()
         # close the tkinter window from its thread
