@@ -1,1 +1,69 @@
-[]
+{
+    "trades": [
+        {
+            "side": "BUY",
+            "price": 84467.04,
+            "quantity": 0.0005919468706373516,
+            "cost": 50.0,
+            "timestamp": "2025-12-01T17:16:33.014052Z"
+        },
+        {
+            "side": "SELL",
+            "price": 84811.02,
+            "quantity": 0.0,
+            "proceeds": 0.0,
+            "timestamp": "2025-12-01T17:32:12.553156Z"
+        },
+        {
+            "side": "SELL",
+            "price": 84858.01,
+            "quantity": 0.0,
+            "proceeds": 0.0,
+            "timestamp": "2025-12-01T17:37:02.868831Z"
+        },
+        {
+            "side": "SELL",
+            "price": 84969.99,
+            "quantity": 0.0,
+            "proceeds": 0.0,
+            "timestamp": "2025-12-01T17:37:33.781889Z"
+        },
+        {
+            "side": "SELL",
+            "price": 84871.25,
+            "quantity": 0.0,
+            "proceeds": 0.0,
+            "timestamp": "2025-12-01T17:40:26.172269Z"
+        },
+        {
+            "side": "SELL",
+            "price": 85194.77,
+            "quantity": 0.0,
+            "proceeds": 0.0,
+            "timestamp": "2025-12-01T17:44:50.360123Z"
+        },
+        {
+            "side": "SELL",
+            "price": 85103.37,
+            "quantity": 0.0005919468706373516,
+            "proceeds": 50.37667355219266,
+            "timestamp": "2025-12-01T17:48:10.216266Z"
+        },
+        {
+            "side": "BUY",
+            "price": 85178.34,
+            "quantity": 0.0011784295579391742,
+            "cost": 100.37667355219267,
+            "timestamp": "2025-12-01T17:49:16.191894Z"
+        },
+        {
+            "side": "SELL",
+            "price": 85203.31,
+            "quantity": 0.0011784295579391742,
+            "proceeds": 100.40609893825442,
+            "timestamp": "2025-12-01T17:49:47.344395Z"
+        }
+    ],
+    "usdt_balance": 100.40609893825442,
+    "crypto_balance": 0.0
+}

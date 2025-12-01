@@ -34,7 +34,6 @@ class Portfolio:
         self._usdt_balance = initial_capital
         self._crypto_balance = 0.0
         self._trade_history = []
-        self.asset = 0.0  # Quantity of cryptocurrency held
 
     @property
     def usdt_balance(self) -> float:
@@ -164,8 +163,8 @@ class Portfolio:
 
         # Execute buy
         quantity = amount_usdt / price
-        self.asset += quantity
-        self._usdt_balance -= amount_usdt
+        # self._crypto_balance += quantity
+        # self._usdt_balance -= amount_usdt
 
         trade = self.update_balance(price, quantity, "BUY")
         # self._record_trade(trade)
@@ -181,11 +180,11 @@ class Portfolio:
 
         # AUTO = sell all
         if mode == "auto":
-            quantity = self.asset
+            quantity = self._crypto_balance
 
         # percent of asset
         elif percent is not None:
-            quantity = self.asset * (percent / 100)
+            quantity = self._crypto_balance * (percent / 100)
 
         # If quantity is provided → nothing to convert
 
@@ -193,17 +192,17 @@ class Portfolio:
         if quantity is None:
             raise ValueError("Provide quantity, percent OR mode='auto'.")
 
-        if quantity > self.asset:
+        if quantity > self._crypto_balance:
             raise RuntimeError("Not enough asset to sell")
 
         # Execute sell
         proceeds = quantity * price
-        self.asset -= quantity
-        self._usdt_balance += proceeds
+        # self._crypto_balance -= quantity
+        # self._usdt_balance += proceeds
 
         trade = self.update_balance(price, quantity, "SELL")
         # 5self._record_trade(trade)
-        return quantity
+        return proceeds
 
     def get_total_value_usdt(self, current_price: float) -> float:
         """

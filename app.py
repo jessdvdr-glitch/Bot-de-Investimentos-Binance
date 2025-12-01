@@ -103,6 +103,12 @@ class LiveWindow:
         self._history_box.insert("1.0", "No trades yet.\n")
         self._history_box.config(state="disabled")
 
+        ttk.Label(frm, text="Signals:").grid(column=0, row=8, sticky="nw", pady=(10, 0))
+        self._signal_box = tk.Text(frm, width=50, height=8, wrap="none")
+        self._signal_box.grid(column=0, row=9, columnspan=2, pady=(2, 0))
+        self._signal_box.insert("1.0", "No signals yet.\n")
+        self._signal_box.config(state="disabled")
+
         # fetch historical data once
         try:
             df = self.client.fetch_historical_data(self.pair, "1m")
@@ -505,6 +511,7 @@ class App:
             return
 
         qty = usdt / price
+        print(qty)
         # verify app-side balance before placing simulated order
         if qty <= 0:
             print("Calculated zero quantity; aborting buy.")
@@ -517,13 +524,7 @@ class App:
         )
         # apply to portfolio (simulate execution)
         purchased_qty = self._portfolio.execute_buy(price, usdt, mode="auto")
-        # trade = {
-        #     "type": "BUY",
-        #     "price": price,
-        #     "quantity": purchased_qty,
-        #     "timestamp": datetime.utcnow().isoformat() + "Z",
-        # }
-        # self._data_manager.append_trade(trade)
+
         print(f"Bought {purchased_qty:.8f} {self._pair} at {price:.8f} (simulated)")
 
     def sell_all(self) -> None:
@@ -589,6 +590,13 @@ class App:
             self._run_thread.join(timeout=5)
         print("Bot stopped.")
 
+    def add_signal(self, signal: str, price: float):
+        msg = f"[SIGNAL] {signal.upper()} at {price:.8f}"
+        # print(msg)
+
+        if hasattr(self, "_live_window") and self._live_window:
+            self._live_window.add_signal(msg)
+
     def run_loop(self) -> None:
         """
         Execute the main trading loop.
@@ -622,15 +630,15 @@ class App:
 
                 # 4. Execute trades based on signal
                 if signal == "BUY":
-                    print(f"[SIGNAL] BUY triggered at {price:.8f}")
+                    self.add_signal(signal, price)
                     self.buy_all()
 
                 elif signal == "SELL":
-                    print(f"[SIGNAL] SELL triggered at {price:.8f}")
+                    self.add_signal(signal, price)
                     self.sell_all()
 
                 else:
-                    print(f"[SIGNAL] HOLD at {price:.8f}")
+                    self.add_signal(signal, price)
 
             except Exception as e:
                 print(f"Error in run_loop: {e}")
