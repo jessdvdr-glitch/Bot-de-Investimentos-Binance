@@ -156,3 +156,38 @@ Have fun experimenting — and be careful with real API keys.
 # Bot-de-Investimentos-Binance
 
 O desafio será desenvolver um Bot de Investimentos Simulado (paper trading), que se conectará à plataforma de criptomoedas Binance para tomar decisões de compra e venda com base em uma estratégia pré-definida. Objetivo Desenvolver um aplicativo em Python (interface via console ou gráfica) que simule operações de trade de criptomoedas.
+
+## 3. Arquivo README.md (explicação solicitada)
+
+Este ficheiro README explica o projeto, a estrutura das classes e como executar a aplicação, com base no código presente neste repositório.
+
+- Projeto: um bot de trading simulado (paper trading) que obtém preços públicos da Binance, exibe uma janela gráfica em tempo real (`LiveWindow` em `app.py`) e permite simular ordens de compra/venda atualizando um `Portfolio` em memória.
+
+- Estrutura das classes / ficheiros principais (correspondência com o código):
+
+  - `app.py`: orquestrador principal — coleta a configuração do utilizador, cria o `BinanceClient`, instancia o `Portfolio`, a `MovingAverageStrategy` e o `LiveWindow`; contém o menu de ações (Start, Buy, Sell, Stop, Exit) e o loop principal.
+  - `binance_client.py`: cliente para endpoints públicos Binance (klines, preço atual) e utilitários para ordens de teste (testnet / simulação).
+  - `portfolio.py`: gerencia `_usdt_balance`, `_crypto_balance` e `_trade_history`; métodos `execute_buy` / `execute_sell` e `update_balance` cuidam da lógica de conversão USDT ↔ quantidade de cripto e do registo de transações.
+  - `data_manager.py`: carregamento e salvamento de estado em JSON (`trades.json`), oferece `charge_data()` e `save_state()` para restaurar persistência entre sessões.
+  - `trading_strategy.py` / `moving_average_strategy.py`: interface e esqueleto de estratégia; `MovingAverageStrategy` calcula indicadores e fornece sinais (BUY/SELL/WAIT).
+
+- Como executar a aplicação:
+
+  1. (Opcional) Criar e ativar um ambiente virtual.
+  2. Instalar dependências: `pip install -r requirements.txt`.
+  3. Executar: `python app.py` e seguir o menu interativo.
+  4. Se `trades.json` já existir com dados, a aplicação carrega o `Portfolio` e ignora o pedido de capital inicial.
+
+- Observações importantes: o UI usa `tkinter` e o pull de preços atual é feito pelo `BinanceClient`; o `LiveWindow` mostra USDT balance e crypto balance atualizados.
+
+### Critérios de Avaliação (Total: 10,0 pontos)
+
+1. Presença do `README.md` com explicação do projeto, estrutura das classes e instruções de execução — 2,0 pts
+2. Implementação funcional de `Portfolio` com atualização correta de saldos e histórico de trades — 3,0 pts
+3. `BinanceClient` capaz de obter preços históricos e preço atual (testnet ok) — 2,0 pts
+4. Interface de execução (menu) e `LiveWindow` atualizando informações em tempo real — 2,0 pts
+5. Persistência de estado (`data_manager.py` e `trades.json`) e restauração ao reiniciar — 1,0 pt
+
+---
+
+As secções acima foram geradas com base no código existente neste repositório; verifique os ficheiros citados para mais detalhes e exemplos de uso.
