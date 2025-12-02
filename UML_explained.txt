@@ -78,10 +78,10 @@ class DataManager {
 MovingAverageStrategy --|> TradingStrategy : inherits
 
 ' App utilise (compose) les autres classes [cite: 48]
-App *-- BinanceClient : uses
-App *-- Portfolio : manages
-App *-- TradingStrategy : uses
-App *-- DataManager : uses
+App "1" *-- "1" BinanceClient : uses
+App "1" *-- "1" Portfolio : manages
+App "*" *-- "1" TradingStrategy : uses
+App "1" *-- "1" DataManager : uses
 
 @enduml
 
